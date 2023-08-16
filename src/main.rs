@@ -1,8 +1,10 @@
 #![no_std]
 #![no_main]
+#![allow(non_upper_case_globals)]
 
+mod config;
+use pico2812bmatrix::buffer;
 use pico2812bmatrix::draw_bitmap;
-use pico2812bmatrix::{buffer, draw_line};
 // The macro for our start-up function
 use rp_pico::entry;
 
@@ -36,9 +38,8 @@ use ws2812_pio::Ws2812;
 
 mod fonts;
 
-// Currently 3 consecutive LEDs are driven by this example
-// to keep the power draw compatible with USB:
-const STRIP_LEN: usize = 40;
+const led_brightness: u8 = 42;
+const sleep_time: u32 = 200;
 
 macro_rules! textbuffer_line {
     () => {
@@ -64,25 +65,25 @@ macro_rules! out {
 
 macro_rules! red {
     () => {
-        r!(255, 0, 0)
+        r!(led_brightness, 0, 0)
     };
 }
 
 macro_rules! blue {
     () => {
-        r!(0, 0, 255)
+        r!(0, 0, led_brightness)
     };
 }
 
 macro_rules! green {
     () => {
-        r!(0, 255, 0)
+        r!(0, led_brightness, 0)
     };
 }
 
 macro_rules! white {
     () => {
-        r!(255, 255, 255)
+        r!(led_brightness, led_brightness, led_brightness)
     };
 }
 
@@ -122,12 +123,7 @@ fn main() -> ! {
     );
 
     // Setup a delay for the LED blink signals:
-    let mut delay =
-        cortex_m::delay::Delay::new(core.SYST, clocks.system_clock.freq().to_Hz());
-    
-    // Import the `sin` function for a smooth hue animation from the
-    // Pico rp2040 ROM:
-    let sin = hal::rom_data::float_funcs::fsin::ptr();
+    let mut delay = cortex_m::delay::Delay::new(core.SYST, clocks.system_clock.freq().to_Hz());
 
     // Create a count down timer for the Ws2812 instance:
     let timer = Timer::new(pac.TIMER, &mut pac.RESETS);
@@ -218,7 +214,7 @@ fn main() -> ! {
             blue!(),
             white!(),
             white!(),
-            green!(),
+            red!(),
             white!(),
             white!(),
             blue!(),
@@ -296,7 +292,7 @@ fn main() -> ! {
             blue!(),
             white!(),
             white!(),
-            green!(),
+            red!(),
             white!(),
             white!(),
             blue!(),
@@ -329,113 +325,9 @@ fn main() -> ! {
             out!(),
         ][..],
     ];
-    let mut text_buffer = [
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        textbuffer_line!(),
-        ];
-        pico2812bmatrix::fonts(&fonts::fonts);
-        pico2812bmatrix::initialize_text_buffer(
-            &mut text_buffer,
-            &['B', 'E', ' ', 'N', 'I', 'C', 'E', ' ', 'T', 'O', ' ', 'E', 'A', 'C', 'H', ' ', 'O', 'T', 'H', 'E', 'R'],
-            red!(),
-        );
+    let mut text_buffer = textbuffer!();
+    pico2812bmatrix::fonts(&fonts::fonts);
+    pico2812bmatrix::initialize_text_buffer(&mut text_buffer, &config::TEXT, red!());
     loop {
         pico2812bmatrix::draw_text_buffer(&mut text_buffer, 1);
         draw_bitmap(&alpaca, (0, 9));
@@ -495,6 +387,6 @@ fn main() -> ! {
         ))
         .unwrap();
         pico2812bmatrix::shift_text_buffer(&mut text_buffer);
-        delay.delay_ms(100);
+        delay.delay_ms(sleep_time);
     }
 }

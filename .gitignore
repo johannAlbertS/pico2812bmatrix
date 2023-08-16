@@ -1,3 +1,4 @@
 target/
 driver/build/
 driver/generated/
+src/config.rs
