@@ -2,7 +2,7 @@
 
 use smart_leds::RGB8;
 
-const WIDTH: usize = 10;
+const WIDTH: usize = 12;
 const HEIGHT: usize = 20;
 
 mod bresenham;
@@ -10,12 +10,12 @@ mod bresenham;
 pub type String<'a> = &'a [char];
 
 struct State {
-    pub(crate) fonts: &'static [&'static[&'static[bool]]; 26],
+    pub(crate) fonts: &'static [&'static [&'static [bool]]; 27],
 }
 
 #[allow(non_upper_case_globals)]
 static mut state: State = State {
-    fonts: &[&[&[false; 7]]; 26],   
+    fonts: &[&[&[false; 7]]; 27],
 };
 
 #[inline]
@@ -38,7 +38,7 @@ fn overwritepixel(position: (usize, usize), value: RGB8) {
 }
 
 #[allow(non_upper_case_globals)]
-static mut display: [[RGB8; HEIGHT]; WIDTH] = [[RGB8{r: 0, g: 0, b:0}; HEIGHT]; WIDTH];
+static mut display: [[RGB8; HEIGHT]; WIDTH] = [[RGB8 { r: 0, g: 0, b: 0 }; HEIGHT]; WIDTH];
 
 pub type Vectormap<'a> = &'a [(RGB8, &'a [((usize, usize), (usize, usize))])];
 
@@ -67,7 +67,7 @@ pub fn draw_bitmap(map: &[&[RGB8]], position: (usize, usize)) {
             yindex += 1;
             ycounter += 1;
         }
-        yindex = 0;
+        yindex = position.1;
         ycounter = 0;
         xindex += 1;
         xcounter += 1;
@@ -82,7 +82,9 @@ pub fn draw_generic_bitmap(map: &[&[bool]], position: (usize, usize), color: RGB
     while xindex < WIDTH && xcounter < map.len() {
         while yindex < HEIGHT && ycounter < map[0].len() {
             if map[xcounter][ycounter] {
-                unsafe { display[xindex][yindex] = color; }
+                unsafe {
+                    display[xindex][yindex] = color;
+                }
             }
             yindex += 1;
             ycounter += 1;
@@ -91,14 +93,19 @@ pub fn draw_generic_bitmap(map: &[&[bool]], position: (usize, usize), color: RGB
         ycounter = 0;
         xindex += 1;
         xcounter += 1;
-    }   
+    }
 }
 
 pub fn draw_line(point1: (usize, usize), point2: (usize, usize), color: RGB8) {
     draw_line_internal(point1, point2, color, mixpixel);
 }
 
-fn draw_line_internal(point1: (usize, usize), point2: (usize, usize), color: RGB8, render_func: fn(position: (usize, usize), value: RGB8)) {
+fn draw_line_internal(
+    point1: (usize, usize),
+    point2: (usize, usize),
+    color: RGB8,
+    render_func: fn(position: (usize, usize), value: RGB8),
+) {
     bresenham::draw_line(
         (point1.0 as isize, point1.1 as isize),
         (point2.0 as isize, point2.1 as isize),
@@ -107,33 +114,40 @@ fn draw_line_internal(point1: (usize, usize), point2: (usize, usize), color: RGB
     )
 }
 
-pub fn fonts(fonts: &'static [&'static [&'static [bool]]; 26]) {
-    unsafe { state.fonts = fonts; }
+pub fn fonts(fonts: &'static [&'static [&'static [bool]]; 27]) {
+    unsafe {
+        state.fonts = fonts;
+    }
 }
 
 pub fn initialize_text_buffer(buffer: &mut [&mut [RGB8]], text: String, color: RGB8) {
     let mut textindex = 0;
     let mut xindex = 0;
-    let mut fontsindex = text[textindex] as usize - 65;
+    let mut fontsindex = match text[textindex] as usize{
+        32 => 26,
+        a => a - 65,
+    };//text[textindex] as usize - 65;
     let mut xcounter = 0;
     while xindex < buffer.len() {
         for i in 0..7 {
-            buffer[xindex][i] = 
-                if unsafe { state.fonts[fontsindex][xcounter][i] } == true {
-                    color
-                } else {
-                    buffer[xindex][i]
-                };
+            buffer[xindex][i] = if unsafe { state.fonts[fontsindex][xcounter][i] } == true {
+                color
+            } else {
+                buffer[xindex][i]
+            };
         }
-        xindex+=1;
-        xcounter+=1;
+        xindex += 1;
+        xcounter += 1;
         if xcounter == unsafe { state.fonts[fontsindex].len() } {
             xcounter = 0;
             textindex += 1;
             if textindex == text.len() {
                 return ();
             }
-            fontsindex = text[textindex] as usize - 65;
+            fontsindex = match text[textindex] as usize{
+                32 => 26,
+                a => a - 65,
+            };
             xindex += 1;
         }
     }
@@ -144,7 +158,7 @@ pub fn draw_text_buffer(buffer: &[&mut [RGB8]], ypos: usize) {
     let mut xindex = 1;
     let mut xcounter = 0;
     let mut ycounter = 0;
-    while xindex < WIDTH-1 && xcounter < buffer.len() {
+    while xindex < WIDTH - 1 && xcounter < buffer.len() {
         while yindex < HEIGHT && ycounter < buffer[0].len() {
             unsafe {
                 display[xindex][yindex] = buffer[xcounter][ycounter];
@@ -156,6 +170,22 @@ pub fn draw_text_buffer(buffer: &[&mut [RGB8]], ypos: usize) {
         ycounter = 0;
         xindex += 1;
         xcounter += 1;
+    }
+}
+
+pub fn reset_buffer() {
+    let mut x: usize = 0;
+    let mut y: usize = 0;
+    while x < WIDTH {
+        while y < HEIGHT {
+            unsafe {
+                display[x][y] = RGB8 { r: 0, g: 0, b: 0 };
+                display[x][y]
+            };
+            y += 1;
+        }
+        y = 0;
+        x += 1;
     }
 }
 

@@ -1,6 +1,7 @@
 #![no_std]
 #![no_main]
 
+use pico2812bmatrix::draw_bitmap;
 use pico2812bmatrix::{buffer, draw_line};
 // The macro for our start-up function
 use rp_pico::entry;
@@ -39,6 +40,52 @@ mod fonts;
 // to keep the power draw compatible with USB:
 const STRIP_LEN: usize = 40;
 
+macro_rules! textbuffer_line {
+    () => {
+        &mut [out!(), out!(), out!(), out!(), out!(), out!(), out!()][..]
+    };
+}
+
+macro_rules! r {
+    ($r:expr, $g:expr, $b:expr) => {
+        RGB8 {
+            r: $r,
+            g: $g,
+            b: $b,
+        }
+    };
+}
+
+macro_rules! out {
+    () => {
+        r!(0, 0, 0)
+    };
+}
+
+macro_rules! red {
+    () => {
+        r!(255, 0, 0)
+    };
+}
+
+macro_rules! blue {
+    () => {
+        r!(0, 0, 255)
+    };
+}
+
+macro_rules! green {
+    () => {
+        r!(0, 255, 0)
+    };
+}
+
+macro_rules! white {
+    () => {
+        r!(255, 255, 255)
+    };
+}
+
 #[entry]
 fn main() -> ! {
     // Grab our singleton objects
@@ -75,9 +122,9 @@ fn main() -> ! {
     );
 
     // Setup a delay for the LED blink signals:
-    let mut frame_delay =
+    let mut delay =
         cortex_m::delay::Delay::new(core.SYST, clocks.system_clock.freq().to_Hz());
-
+    
     // Import the `sin` function for a smooth hue animation from the
     // Pico rp2040 ROM:
     let sin = hal::rom_data::float_funcs::fsin::ptr();
@@ -110,41 +157,344 @@ fn main() -> ! {
         &mut pio0,
         sm02,
         clocks.peripheral_clock.freq(),
-        timer.count_down()
+        timer.count_down(),
     );
     let mut ws4 = Ws2812::new(
         pins.gpio3.into_mode(),
         &mut pio1,
         sm10,
         clocks.peripheral_clock.freq(),
-        timer.count_down()
+        timer.count_down(),
     );
     let mut ws5 = Ws2812::new(
         pins.gpio4.into_mode(),
         &mut pio1,
         sm11,
         clocks.peripheral_clock.freq(),
-        timer.count_down()
+        timer.count_down(),
     );
     let mut ws6 = Ws2812::new(
         pins.gpio5.into_mode(),
         &mut pio1,
         sm12,
         clocks.peripheral_clock.freq(),
-        timer.count_down()
+        timer.count_down(),
     );
 
     #[allow(non_upper_case_globals)]
     const brithness_val: u8 = 64;
 
+    let alpaca = [
+        &[
+            out!(),
+            blue!(),
+            blue!(),
+            blue!(),
+            blue!(),
+            blue!(),
+            blue!(),
+            blue!(),
+            blue!(),
+            out!(),
+            out!(),
+        ][..],
+        &[
+            blue!(),
+            blue!(),
+            blue!(),
+            blue!(),
+            blue!(),
+            white!(),
+            white!(),
+            white!(),
+            blue!(),
+            blue!(),
+            out!(),
+        ][..],
+        &[
+            blue!(),
+            blue!(),
+            blue!(),
+            blue!(),
+            white!(),
+            white!(),
+            green!(),
+            white!(),
+            white!(),
+            blue!(),
+            blue!(),
+        ][..],
+        &[
+            out!(),
+            blue!(),
+            blue!(),
+            blue!(),
+            white!(),
+            white!(),
+            white!(),
+            white!(),
+            white!(),
+            white!(),
+            blue!(),
+        ][..],
+        &[
+            out!(),
+            out!(),
+            blue!(),
+            blue!(),
+            white!(),
+            white!(),
+            white!(),
+            red!(),
+            red!(),
+            white!(),
+            blue!(),
+        ][..],
+        &[
+            out!(),
+            out!(),
+            blue!(),
+            blue!(),
+            white!(),
+            white!(),
+            white!(),
+            white!(),
+            red!(),
+            white!(),
+            blue!(),
+        ][..],
+        &[
+            out!(),
+            out!(),
+            blue!(),
+            blue!(),
+            white!(),
+            white!(),
+            white!(),
+            red!(),
+            red!(),
+            white!(),
+            blue!(),
+        ][..],
+        &[
+            out!(),
+            blue!(),
+            blue!(),
+            blue!(),
+            white!(),
+            white!(),
+            white!(),
+            white!(),
+            white!(),
+            white!(),
+            blue!(),
+        ][..],
+        &[
+            blue!(),
+            blue!(),
+            blue!(),
+            blue!(),
+            white!(),
+            white!(),
+            green!(),
+            white!(),
+            white!(),
+            blue!(),
+            blue!(),
+        ][..],
+        &[
+            blue!(),
+            blue!(),
+            blue!(),
+            blue!(),
+            blue!(),
+            white!(),
+            white!(),
+            white!(),
+            blue!(),
+            blue!(),
+            out!(),
+        ][..],
+        &[
+            out!(),
+            blue!(),
+            blue!(),
+            blue!(),
+            blue!(),
+            blue!(),
+            blue!(),
+            blue!(),
+            blue!(),
+            out!(),
+            out!(),
+        ][..],
+    ];
+    let mut text_buffer = [
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        textbuffer_line!(),
+        ];
+        pico2812bmatrix::fonts(&fonts::fonts);
+        pico2812bmatrix::initialize_text_buffer(
+            &mut text_buffer,
+            &['B', 'E', ' ', 'N', 'I', 'C', 'E', ' ', 'T', 'O', ' ', 'E', 'A', 'C', 'H', ' ', 'O', 'T', 'H', 'E', 'R'],
+            red!(),
+        );
     loop {
-        draw_line((0, 0), (5, 12), RGB8 {r: 255, g: 125, b: 0});
+        pico2812bmatrix::draw_text_buffer(&mut text_buffer, 1);
+        draw_bitmap(&alpaca, (0, 9));
         let framebuffer = buffer();
-        ws.write(brightness(framebuffer[0].iter().rev().chain(framebuffer[1].iter().rev()).copied(), brithness_val)).unwrap();
-        ws2.write(brightness(framebuffer[2].iter().rev().chain(framebuffer[3].iter().rev()).copied(), brithness_val)).unwrap();
-        ws3.write(brightness(framebuffer[4].iter().rev().chain(framebuffer[5].iter().rev()).copied(), brithness_val)).unwrap();
-        ws4.write(brightness(framebuffer[6].iter().rev().chain(framebuffer[7].iter().rev()).copied(), brithness_val)).unwrap();
-        ws5.write(brightness(framebuffer[8].iter().rev().chain(framebuffer[9].iter().rev()).copied(), brithness_val)).unwrap();
-        ws6.write(brightness(framebuffer[10].iter().rev().chain(framebuffer[11].iter().rev()).copied(), brithness_val)).unwrap();
+        ws.write(brightness(
+            framebuffer[0]
+                .iter()
+                .rev()
+                .chain(framebuffer[1].iter().rev())
+                .copied(),
+            brithness_val,
+        ))
+        .unwrap();
+        ws2.write(brightness(
+            framebuffer[2]
+                .iter()
+                .rev()
+                .chain(framebuffer[3].iter().rev())
+                .copied(),
+            brithness_val,
+        ))
+        .unwrap();
+        ws3.write(brightness(
+            framebuffer[4]
+                .iter()
+                .rev()
+                .chain(framebuffer[5].iter().rev())
+                .copied(),
+            brithness_val,
+        ))
+        .unwrap();
+        ws4.write(brightness(
+            framebuffer[6]
+                .iter()
+                .rev()
+                .chain(framebuffer[7].iter().rev())
+                .copied(),
+            brithness_val,
+        ))
+        .unwrap();
+        ws5.write(brightness(
+            framebuffer[8]
+                .iter()
+                .rev()
+                .chain(framebuffer[9].iter().rev())
+                .copied(),
+            brithness_val,
+        ))
+        .unwrap();
+        ws6.write(brightness(
+            framebuffer[10]
+                .iter()
+                .rev()
+                .chain(framebuffer[11].iter().rev())
+                .copied(),
+            brithness_val,
+        ))
+        .unwrap();
+        pico2812bmatrix::shift_text_buffer(&mut text_buffer);
+        delay.delay_ms(100);
     }
 }
