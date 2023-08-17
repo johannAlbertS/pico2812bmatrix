@@ -1,5 +1,5 @@
 #[allow(non_upper_case_globals)]
-pub static fonts: [&[&[bool]]; 27] = [
+pub static fonts: [&[&[bool]]; 29] = [
     [
         [false, true, true, true, true, true, true].as_slice(), //a
         [true, false, false, false, true, false, false].as_slice(),
@@ -191,7 +191,13 @@ pub static fonts: [&[&[bool]]; 27] = [
         [true, true, false, false, false, false, true].as_slice(),
     ]
     .as_slice(),
+    [[false, false, false, false, false, false, false].as_slice()].as_slice(),
+    [[false, false, false, false, false, false, true].as_slice()].as_slice(),
     [
-        [false, false, false, false, false, false, false].as_slice(),
-    ].as_slice(),
+        [false, false, false, false, false, true, true].as_slice(), //z
+        [false, false, false, true, true, true, false].as_slice(),
+        [false, true, true, true, false, false, false].as_slice(),
+        [true, true, false, false, false, false, false].as_slice(),
+    ]
+    .as_slice(),
 ];
