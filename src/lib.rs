@@ -10,12 +10,12 @@ mod bresenham;
 pub type String<'a> = &'a [char];
 
 struct State {
-    pub(crate) fonts: &'static [&'static [&'static [bool]]; 29],
+    pub(crate) fonts: &'static [&'static [&'static [bool]]; 39],
 }
 
 #[allow(non_upper_case_globals)]
 static mut state: State = State {
-    fonts: &[&[&[false; 7]]; 29],
+    fonts: &[&[&[false; 7]]; 39 ],
 };
 
 #[inline]
@@ -114,7 +114,7 @@ fn draw_line_internal(
     )
 }
 
-pub fn fonts(fonts: &'static [&'static [&'static [bool]]; 29]) {
+pub fn fonts(fonts: &'static [&'static [&'static [bool]]; 39]) {
     unsafe {
         state.fonts = fonts;
     }
@@ -125,7 +125,7 @@ pub fn initialize_text_buffer(buffer: &mut [&mut [RGB8]], text: String, color: R
     let mut xindex = 0;
     let mut fontsindex = match text[textindex] as usize {
         32 => 26,
-        c if c == 46 || c == 47 => c - 19,
+        c if c >= 46 && c <= 57 => c - 19,
         c => c - 65,
     }; //text[textindex] as usize - 65;
     let mut xcounter = 0;
@@ -147,7 +147,7 @@ pub fn initialize_text_buffer(buffer: &mut [&mut [RGB8]], text: String, color: R
             }
             fontsindex = match text[textindex] as usize {
                 32 => 26,
-                c if c == 46 || c == 47 => c - 19,
+                c if c >= 46 && c <= 57 => c - 19,
                 a => a - 65,
             };
             xindex += 1;
