@@ -1,6 +1,14 @@
 use std::env::current_dir;
 
 const TEXT: &str = "Rutendo Gandi";
+//const TEXT: &str = "custom apps fur die matrix sind willkommen githum johannAlbertS pico2812bmatrix"
+// const TEXT: &str = "The one with the braid";
+// const TEXT: &str = "Simon Duckert";
+// const TEXT: &str = "Anke Domsheidt Berg";
+// const TEXT: &str = "Enny";
+// const TEXT: &str = "Bonnie Mehring";
+// const TEXT: &str = "Benedikt";
+// const TEXT: &str = "Katja Lauth";
 
 const OUTPUT_FILE_NAME: &str = "config.rs";
 
