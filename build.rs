@@ -36,6 +36,7 @@ fn get_letter_buffer_len(letter: char) -> i32 {
     match letter {
         'k' | 'm' | 'n' | 'q' | 't' | 'v' | 'w' | 'x' | 'y' | 'z' => 6,
         'i' => 4,
+        '.' => 2,
         _ => 5,
     }
 }

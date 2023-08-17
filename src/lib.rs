@@ -10,12 +10,12 @@ mod bresenham;
 pub type String<'a> = &'a [char];
 
 struct State {
-    pub(crate) fonts: &'static [&'static [&'static [bool]]; 27],
+    pub(crate) fonts: &'static [&'static [&'static [bool]]; 29],
 }
 
 #[allow(non_upper_case_globals)]
 static mut state: State = State {
-    fonts: &[&[&[false; 7]]; 27],
+    fonts: &[&[&[false; 7]]; 29],
 };
 
 #[inline]
@@ -114,7 +114,7 @@ fn draw_line_internal(
     )
 }
 
-pub fn fonts(fonts: &'static [&'static [&'static [bool]]; 27]) {
+pub fn fonts(fonts: &'static [&'static [&'static [bool]]; 29]) {
     unsafe {
         state.fonts = fonts;
     }
@@ -123,10 +123,11 @@ pub fn fonts(fonts: &'static [&'static [&'static [bool]]; 27]) {
 pub fn initialize_text_buffer(buffer: &mut [&mut [RGB8]], text: String, color: RGB8) {
     let mut textindex = 0;
     let mut xindex = 0;
-    let mut fontsindex = match text[textindex] as usize{
+    let mut fontsindex = match text[textindex] as usize {
         32 => 26,
-        a => a - 65,
-    };//text[textindex] as usize - 65;
+        c if c == 46 || c == 47 => c - 19,
+        c => c - 65,
+    }; //text[textindex] as usize - 65;
     let mut xcounter = 0;
     while xindex < buffer.len() {
         for i in 0..7 {
@@ -144,8 +145,9 @@ pub fn initialize_text_buffer(buffer: &mut [&mut [RGB8]], text: String, color: R
             if textindex == text.len() {
                 return ();
             }
-            fontsindex = match text[textindex] as usize{
+            fontsindex = match text[textindex] as usize {
                 32 => 26,
+                c if c == 46 || c == 47 => c - 19,
                 a => a - 65,
             };
             xindex += 1;

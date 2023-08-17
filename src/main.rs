@@ -38,7 +38,7 @@ use ws2812_pio::Ws2812;
 
 mod fonts;
 
-const led_brightness: u8 = 42;
+const led_brightness: u8 = 230;
 const sleep_time: u32 = 200;
 
 macro_rules! textbuffer_line {
@@ -78,6 +78,15 @@ macro_rules! blue {
 macro_rules! green {
     () => {
         r!(0, led_brightness, 0)
+    };
+    ($brightness:expr) => {
+        r!(0, $brightness, 0)
+    };
+}
+
+macro_rules! yellow {
+    () => {
+        r!(led_brightness, led_brightness, 0)
     };
 }
 
@@ -214,7 +223,7 @@ fn main() -> ! {
             blue!(),
             white!(),
             white!(),
-            red!(),
+            green!(255),
             white!(),
             white!(),
             blue!(),
@@ -292,7 +301,7 @@ fn main() -> ! {
             blue!(),
             white!(),
             white!(),
-            red!(),
+            green!(255),
             white!(),
             white!(),
             blue!(),
